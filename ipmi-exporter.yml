@@ -1,0 +1,83 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: ipmi-exporter
+  name: ipmi-exporter
+  namespace: monitoring
+  resourceVersion: "407552"
+  selfLink: /apis/extensions/v1beta1/namespaces/monitoring/deployments/ipmi-exporter
+  uid: 59bddff6-0c80-11e8-b41d-000d3a74656d
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ipmi-exporter
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: ipmi-exporter
+    spec:
+      containers:
+      - command:
+        - gunicorn
+        - ipmi_exporter:api
+        - -b
+        - :8000
+        - --name
+        - ipmi_exporter
+        - --log-level=info
+        - --log-file=-
+        - -w
+        - "12"
+        - --max-requests
+        - "10"
+        - -k
+        - eventlet
+        image: luckenbach/ipmi_exporter
+        imagePullPolicy: Always
+        name: exporter
+        ports:
+        - containerPort: 8000
+          name: gunicorn
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/ipmi_exporter/
+          name: ipmi-config
+          subPath: ipmi_exporter.yaml
+      - image: nginx:1.13-alpine
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - containerPort: 80
+          name: web
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /etc/nginx/conf.d/
+          name: nginx-config
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - configMap:
+          defaultMode: 420
+          name: ipmi-configmap
+        name: ipmi-config
+      - configMap:
+          defaultMode: 420
+          name: nginx-configmap
+        name: nginx-config
