@@ -1,0 +1,4 @@
+core:
+  auth:
+     username: user
+     password: examplepw
