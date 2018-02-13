@@ -16,9 +16,5 @@ data:
     }
 kind: ConfigMap
 metadata:
-  creationTimestamp: 2018-02-08T03:28:59Z
   name: nginx-configmap
   namespace: monitoring
-  resourceVersion: "295843"
-  selfLink: /api/v1/namespaces/monitoring/configmaps/nginx-configmap
-  uid: 337cf88d-0c80-11e8-baca-000d3a735c76
