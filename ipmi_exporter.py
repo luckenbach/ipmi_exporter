@@ -1,11 +1,11 @@
 import falcon
 import yaml
 from pyghmi.ipmi import command
+from pyghmi.exceptions import IpmiException
 
 
 with open('/config/ipmi_exporter/ipmi_configmap.yaml', 'r') as f:
     config = yaml.load(f)
-
 
 
 # This is a promSQL metric object lifted from lampwins/junos_exporter
@@ -90,11 +90,17 @@ class MetricResource:
         profile = config[module]['auth']
 
         # Make out pyghmi object
-        ipmicmd = command.Command(bmc=target, userid=profile['username'], password=profile['password'])
-        # ipmicmd = command.Command(bmc="10.32.224.3", userid="ADMIN", password="ADMIN")
+        try:
+            ipmicmd = command.Command(bmc=target, userid=profile['username'], password=profile['password'])
+        except IpmiException as e:
+            resp.status_code = 403
+            resp.content_type = falcon.MEDIA_JSON
+            resp.media = {'Error': 'IPMI Authentication Failure'}
+            return
+        # ipmicmd = command.Command(bmc="10.32.224.3", userid="ADMIN", password="ADMIN"
 
         # Query the rig
-        results = [x for x in ipmicmd.get_sensor_data()]
+        results = [x for x in ipmicmd.get_sensor_data(timeout=50)]
 
         # Do work
         for sensor in results:
@@ -107,8 +113,23 @@ class MetricResource:
             metrics.add_metric('ipmi_' + metric.name.replace(' ', '_').replace('.','_').replace('-','_').lower(), metric.value,
                                labels={'type': metric.type, 'units': metric.units, 'instance': target})
 
+
+        sel_data = [x for x in ipmicmd.get_event_log()]
+        sel_ds = {0:0, 1:0, 2:0}
+        # This will break if there is more than just 0,1,2 but for now its okay
+        for sel in sel_data:
+            count = sel_ds.get(sel['severity'],0)
+            sel_ds[sel['severity']] = count + 1
+
+        for k,v in sel_ds.iteritems():
+            metric_name = 'ipmi_sel_{0}_events'.format(k)
+            metrics.register(metric_name, 'counter')
+            metrics.add_metric(metric_name, v)
+
+
         resp.body = metrics.collect()
         return resp
+
 
 api = falcon.API()
 api.add_route('/metrics', MetricResource())
