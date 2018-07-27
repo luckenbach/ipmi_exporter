@@ -1,0 +1,20 @@
+version: '2'
+services:
+  ipmi_nginx:
+    image: nginx:1.13-alpine
+    restart: always
+    ports:
+      - "9101:80"
+    volumes:
+      - /opt/cyxtera/prometheus/ipmi_exporter/nginx:/etc/nginx/conf.d
+
+  ipmi_exporter:
+    image: ipmi_exporter
+    restart: always
+    command: gunicorn ipmi_exporter:api -b :8000 --name ipmi_exporter --log-level=info --log-file=- -w "12" --max-requests "10" -k eventlet
+    ports:
+      - "8000:8000"
+    volumes:
+      - /opt/cyxtera/prometheus/ipmi_exporter:/config/ipmi_exporter/
+    depends_on:
+      - ipmi_nginx
