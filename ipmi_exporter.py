@@ -1,4 +1,5 @@
 import falcon
+import re
 import yaml
 from pyghmi.ipmi import command
 from pyghmi.exceptions import IpmiException
@@ -71,6 +72,15 @@ class Metrics(object):
 class MetricResource:
     def on_get(self, req, resp):
         """Handles GET requests"""
+
+        def sanitize_name(name):
+            """Returns a Prometheus-safe metric name"""
+            new_name = 'ipmi_' + name.lower()
+            new_name = re.sub(r'\+([0-9])', r'p\1', new_name)    # example case ipmi_+12v
+            new_name = re.sub(r'-([0-9])', r'n\1', new_name)     # example case ipmi_-12v
+            new_name = re.sub(r'[^a-zA-Z0-9_+]+', '_', new_name)
+            return(new_name)
+
         # This end point will only provide plain/text so lets advertise as such
         resp.content_type = falcon.MEDIA_TEXT
 
@@ -104,14 +114,12 @@ class MetricResource:
 
         # Do work
         for sensor in results:
-            sensor_name = 'ipmi_' + sensor.name.replace(' ', '_').replace('.','_').replace('-','_').lower()
-            metrics.register(sensor_name, 'gauge')
+            metrics.register(sanitize_name(sensor.name), 'gauge')
 
         for metric in results:
             if metric.value is None:
                 metric.value = 0
-            metrics.add_metric('ipmi_' + metric.name.replace(' ', '_').replace('.','_').replace('-','_').lower(), metric.value,
-                               labels={'type': metric.type, 'units': metric.units, 'instance': target})
+            metrics.add_metric(sanitize_name(metric.name), metric.value, labels={'type': metric.type, 'units': metric.units, 'instance': target})
 
 
         sel_data = [x for x in ipmicmd.get_event_log()]
