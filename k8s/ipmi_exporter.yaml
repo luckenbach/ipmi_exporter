@@ -2,14 +2,14 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    app: junos-exporter
-  name: junos-exporter
+    app: ipmi-exporter
+  name: ipmi-exporter
   namespace: monitoring
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: junos-exporter
+      app: ipmi-exporter
   strategy:
     rollingUpdate:
       maxSurge: 1
@@ -19,7 +19,7 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        app: junos-exporter
+        app: ipmi-exporter
     spec:
       containers:
       - command:
@@ -37,7 +37,7 @@ spec:
         - "10"
         - -k
         - eventlet
-        image: luckenbach/junos_exporter
+        image: luckenbach/ipmi_exporter
         imagePullPolicy: Always
         name: exporter
         ports:
@@ -48,9 +48,9 @@ spec:
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:
-        - mountPath: /junos_exporter.yaml
-          name: junos-config
-          subPath: junos_exporter.yaml
+        - mountPath: /ipmi_exporter.yaml
+          name: ipmi-config
+          subPath: ipmi_exporter.yaml
       - image: nginx:1.13-alpine
         imagePullPolicy: IfNotPresent
         name: nginx
@@ -72,8 +72,8 @@ spec:
       volumes:
       - configMap:
           defaultMode: 420
-          name: junos-configmap
-        name: junos-config
+          name: ipmi-configmap
+        name: ipmi-config
       - configMap:
           defaultMode: 420
           name: nginx-configmap
