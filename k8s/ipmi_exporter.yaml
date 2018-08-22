@@ -24,17 +24,15 @@ spec:
       containers:
       - command:
         - gunicorn
-        - app:app
+        - ipmi_exporter:api
         - -b
         - :8000
         - --name
-        - app
+        - ipmi_exporter
         - --log-level=info
         - --log-file=-
         - -w
         - "12"
-        - --max-requests
-        - "10"
         - -k
         - eventlet
         image: luckenbach/ipmi_exporter
