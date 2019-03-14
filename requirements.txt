@@ -1,7 +1,7 @@
 falcon==1.4.1
 gunicorn==19.7.1
-pyaml==17.12.1
-pycrypto==2.6.1
+pyaml
+pycrypto
 git+https://github.com/luckenbach/pyghmi.git@addtout#egg=pyghmi
 python-mimeparse==1.6.0
 PyYAML==3.12
