@@ -4,6 +4,6 @@ pyaml
 pycrypto
 git+https://github.com/luckenbach/pyghmi.git@addtout#egg=pyghmi
 python-mimeparse==1.6.0
-PyYAML==3.12
+PyYAML
 six==1.11.0
 eventlet
